@@ -30,11 +30,27 @@ You will also need one of the Selenium [compatible browsers](http://www.selenium
 3. In case of using Firefox as the driver you can configure the FirefoxProfile through this settings:
     ```python
     import os
+ 
     SELENIUM_DRIVER_PROFILE = {
         'browser.download.dir': os.getcwd(),
         'browser.download.folderList': 2,
         'browser.helperApps.neverAsk.saveToDisk': 'application/download,application/octet-stream,application/pdf'
     }
+    ```
+    
+    If this configuration needs to be disabled or changed for a specific spider, just add `custom_settings` to the spider's class. Example below:
+
+    ```python
+    import os
+ 
+    class MySpider(scrapy.Spider):
+       name = 'my_spider'
+    
+       custom_settings = {
+           'SELENIUM_DRIVER_PROFILE': {
+               'browser.download.dir': os.getcwd(),
+           }
+       }
     ```
 
 ## Usage
