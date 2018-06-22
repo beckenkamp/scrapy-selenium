@@ -26,6 +26,17 @@ You will also need one of the Selenium [compatible browsers](http://www.selenium
         'scrapy_selenium.SeleniumMiddleware': 800
     }
     ```
+    
+3. In case of using Firefox as the driver you can configure the FirefoxProfile through this settings:
+    ```python
+    import os
+    SELENIUM_DRIVER_PROFILE = {
+        'browser.download.dir': os.getcwd(),
+        'browser.download.folderList': 2,
+        'browser.helperApps.neverAsk.saveToDisk': 'application/download,application/octet-stream,application/pdf'
+    }
+    ```
+
 ## Usage
 Use the `scrapy_selenium.SeleniumRequest` instead of the scrapy built-in `Request` like below:
 ```python

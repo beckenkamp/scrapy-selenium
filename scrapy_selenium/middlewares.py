@@ -6,6 +6,7 @@ from scrapy import signals
 from scrapy.exceptions import NotConfigured
 from scrapy.http import HtmlResponse
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium import webdriver
 
 from .http import SeleniumRequest
 
@@ -13,7 +14,7 @@ from .http import SeleniumRequest
 class SeleniumMiddleware:
     """Scrapy middleware handling the requests using selenium"""
 
-    def __init__(self, driver_name, driver_executable_path, driver_arguments):
+    def __init__(self, driver_name, driver_executable_path, driver_arguments, driver_profile):
         """Initialize the selenium webdriver
 
         Parameters
@@ -24,6 +25,8 @@ class SeleniumMiddleware:
             The path of the executable binary of the driver
         driver_arguments: list
             A list of arguments to initialize the driver
+        driver_profile: dict
+            A dict with the FirefoxProfile items (firefox only)
 
         """
 
@@ -44,15 +47,23 @@ class SeleniumMiddleware:
             f'{driver_name}_options': driver_options
         }
 
+        # Firefox only
+        if driver_name == 'firefox' and driver_profile:
+            profile = webdriver.FirefoxProfile()
+            for key, value in driver_profile.items():
+                profile.set_preference(key, value)
+            profile.update_preferences()
+            driver_kwargs['firefox_profile'] = profile
+
         self.driver = driver_klass(**driver_kwargs)
 
     @classmethod
     def from_crawler(cls, crawler):
         """Initialize the middleware with the crawler settings"""
-
         driver_name = crawler.settings.get('SELENIUM_DRIVER_NAME')
         driver_executable_path = crawler.settings.get('SELENIUM_DRIVER_EXECUTABLE_PATH')
         driver_arguments = crawler.settings.get('SELENIUM_DRIVER_ARGUMENTS')
+        driver_profile = crawler.settings.get('SELENIUM_DRIVER_PROFILE')
 
         if not driver_name or not driver_executable_path:
             raise NotConfigured(
@@ -62,7 +73,8 @@ class SeleniumMiddleware:
         middleware = cls(
             driver_name=driver_name,
             driver_executable_path=driver_executable_path,
-            driver_arguments=driver_arguments
+            driver_arguments=driver_arguments,
+            driver_profile=driver_profile
         )
 
         crawler.signals.connect(middleware.spider_closed, signals.spider_closed)
