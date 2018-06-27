@@ -6,6 +6,7 @@ from scrapy import signals
 from scrapy.exceptions import NotConfigured
 from scrapy.http import HtmlResponse
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium import webdriver
 
 from .http import SeleniumRequest
@@ -14,7 +15,8 @@ from .http import SeleniumRequest
 class SeleniumMiddleware:
     """Scrapy middleware handling the requests using selenium"""
 
-    def __init__(self, driver_name, driver_executable_path, driver_arguments, driver_profile):
+    def __init__(self, driver_name, driver_executable_path, driver_arguments,
+                 driver_profile, proxy_settings):
         """Initialize the selenium webdriver
 
         Parameters
@@ -27,6 +29,8 @@ class SeleniumMiddleware:
             A list of arguments to initialize the driver
         driver_profile: dict
             A dict with the FirefoxProfile items (firefox only)
+        proxy_settings: dict
+            Dict with the Proxy settings
 
         """
 
@@ -55,6 +59,17 @@ class SeleniumMiddleware:
             profile.update_preferences()
             driver_kwargs['firefox_profile'] = profile
 
+        # Should use proxy?
+        if proxy_settings:
+            proxy = Proxy({
+                'proxyType': ProxyType.MANUAL,
+                'httpProxy': proxy_settings.get('http_proxy'),
+                'ftpProxy': proxy_settings.get('ftp_proxy'),
+                'sslProxy': proxy_settings.get('ssl_proxy'),
+                'noProxy': ''  # set this value as desired
+            })
+            driver_kwargs['proxy'] = proxy
+
         self.driver = driver_klass(**driver_kwargs)
 
     @classmethod
@@ -64,6 +79,7 @@ class SeleniumMiddleware:
         driver_executable_path = crawler.settings.get('SELENIUM_DRIVER_EXECUTABLE_PATH')
         driver_arguments = crawler.settings.get('SELENIUM_DRIVER_ARGUMENTS')
         driver_profile = crawler.settings.get('SELENIUM_DRIVER_PROFILE')
+        proxy_settings = crawler.settings.get('SELENIUM_PROXY_SETTINGS')
 
         if not driver_name or not driver_executable_path:
             raise NotConfigured(
@@ -74,7 +90,8 @@ class SeleniumMiddleware:
             driver_name=driver_name,
             driver_executable_path=driver_executable_path,
             driver_arguments=driver_arguments,
-            driver_profile=driver_profile
+            driver_profile=driver_profile,
+            proxy_settings=proxy_settings,
         )
 
         crawler.signals.connect(middleware.spider_closed, signals.spider_closed)
