@@ -61,14 +61,13 @@ class SeleniumMiddleware:
 
         # Should use proxy?
         if proxy_settings:
-            proxy = Proxy({
-                'proxyType': ProxyType.MANUAL,
+            desired_capabilities = getattr(webdriver.DesiredCapabilities, driver_name.upper())
+            desired_capabilities['proxy'] = {
+                'proxyType': 'MANUAL',
                 'httpProxy': proxy_settings.get('http_proxy'),
-                'ftpProxy': proxy_settings.get('ftp_proxy'),
                 'sslProxy': proxy_settings.get('ssl_proxy'),
-                'noProxy': ''  # set this value as desired
-            })
-            driver_kwargs['proxy'] = proxy
+            }
+            driver_kwargs['desired_capabilities'] = desired_capabilities
 
         self.driver = driver_klass(**driver_kwargs)
 
